@@ -122,30 +122,23 @@ function AdminCareersContent() {
     }
   };
 
-  const handleDownloadResume = (base64Data: string, fileName: string) => {
+  const handleDownloadResume = (resumePath: string, fileName: string) => {
     try {
-      if (!base64Data.startsWith('data:')) {
-        window.open(base64Data, '_blank');
-        return;
-      }
-      const parts = base64Data.split(';base64,');
-      const contentType = parts[0].split(':')[1];
-      const raw = window.atob(parts[1]);
-      const rawLength = raw.length;
-      const uInt8Array = new Uint8Array(rawLength);
-      for (let i = 0; i < rawLength; ++i) {
-        uInt8Array[i] = raw.charCodeAt(i);
-      }
-      const blob = new Blob([uInt8Array], { type: contentType });
-      const url = window.URL.createObjectURL(blob);
+      // resumePath is now always a URL path like /uploads/abc123.pdf
+      // Build the full URL using the API base and open in a new tab
+      const apiUrl = getApiUrl();
+      const fullUrl = resumePath.startsWith('http')
+        ? resumePath
+        : `${apiUrl}${resumePath}`;
+
       const a = document.createElement('a');
-      a.href = url;
+      a.href = fullUrl;
       a.download = fileName || 'resume';
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
       a.click();
-      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Failed to download resume:', error);
-      window.open(base64Data, '_blank');
+      console.error('Failed to open resume:', error);
     }
   };
  

@@ -43,6 +43,9 @@ COPY --from=builder /app/dist ./dist
 # Change ownership of the app directory files to the 'app' user
 RUN chown -R app:app /app
 
+# Create uploads dir and ensure app user can write to it
+RUN mkdir -p /app/uploads && chown -R app:app /app/uploads
+
 # Switch to the non-root user
 USER app
 

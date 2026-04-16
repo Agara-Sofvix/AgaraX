@@ -3,6 +3,11 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import crypto from 'crypto';
+import rateLimit from 'express-rate-limit';
 import connectDB from './lib/db';
 import Inquiry from './models/Inquiry';
 import Application from './models/Application';
@@ -15,6 +20,47 @@ import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { INITIAL_CATEGORIES, INITIAL_TESTIMONIALS } from './lib/initialData';
 
+// ── Multer Upload Config ──────────────────────────────────────────────────────
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
+  filename: (_req, file, cb) => {
+    // Use cryptographically random hex to prevent collisions and enumeration
+    const unique = crypto.randomBytes(16).toString('hex');
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `${unique}${ext}`);
+  }
+});
+
+// Dual-layer validation: MIME type (primary) + extension (secondary defence)
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'application/msword',                                                    // .doc
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document' // .docx
+];
+const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx'];
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB hard cap
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const mimeOk = ALLOWED_MIME_TYPES.includes(file.mimetype);
+    const extOk  = ALLOWED_EXTENSIONS.includes(ext);
+
+    if (mimeOk && extOk) {
+      cb(null, true);
+    } else if (!mimeOk) {
+      cb(new Error(`Invalid MIME type: ${file.mimetype}. Only PDF, DOC and DOCX are accepted.`));
+    } else {
+      cb(new Error(`Invalid file extension "${ext}". Only .pdf, .doc and .docx are accepted.`));
+    }
+  }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+
 mongoose.set('debug', true);
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -22,8 +68,23 @@ const JWT_SECRET = process.env.JWT_SECRET || 'AgaraX-secure-secret-2026';
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ limit: '2mb', extended: true }));
+
+// Serve uploaded resumes as static files
+app.use('/uploads', express.static(UPLOADS_DIR));
+
+// ── Rate Limiting ─────────────────────────────────────────────────────────────
+// Scoped only to /api/applications — prevents spam uploads and storage abuse
+const applicationRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15-minute window
+  max: 50,                  // max 50 submissions per IP per window
+  standardHeaders: true,    // Return rate limit info in RateLimit-* headers
+  legacyHeaders: false,
+  message: { error: 'Too many applications submitted from this IP. Please try again after 15 minutes.' }
+});
+app.use('/api/applications', applicationRateLimit);
+// ─────────────────────────────────────────────────────────────────────────────
 
 // Simple logger
 app.use((req, res, next) => {
@@ -354,9 +415,17 @@ app.get('/api/applications', async (req, res) => {
   }
 });
 
-app.post('/api/applications', async (req, res) => {
+app.post('/api/applications', upload.single('resume'), async (req, res) => {
   try {
-    const { name, email, roleTitle, experience, phone, coverLetter, resume } = req.body;
+    const { name, email, roleTitle, experience, phone, coverLetter } = req.body;
+
+    if (!name || !email || !roleTitle || !experience) {
+      return res.status(400).json({ error: 'name, email, roleTitle and experience are required' });
+    }
+
+    // Store the full URL path so consumers can open it directly
+    const resumePath = req.file ? `/uploads/${req.file.filename}` : null;
+
     const application = await Application.create({
       name,
       email,
@@ -364,9 +433,9 @@ app.post('/api/applications', async (req, res) => {
       experience,
       phone,
       coverLetter,
-      resume
+      resume: resumePath
     });
-    res.status(201).json(application);
+    res.status(201).json({ message: 'Application submitted successfully', application });
   } catch (error: any) {
     console.error('Error creating application:', error);
     res.status(400).json({ error: error.message || 'Failed to create application' });

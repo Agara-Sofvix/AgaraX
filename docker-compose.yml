@@ -30,6 +30,8 @@ services:
       - .env.production
     environment:
       - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017/AgaraX}
+    volumes:
+      - ./uploads:/app/uploads   # persist resume files across restarts
     depends_on:
       - mongodb
     healthcheck:
@@ -108,3 +110,4 @@ networks:
 
 volumes:
   mongodb_data:
+  # uploads dir is a host-bind mount (see backend service), not a named volume

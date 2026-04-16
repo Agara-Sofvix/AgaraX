@@ -9,7 +9,7 @@ export interface IApplication extends Document {
   interviewDate?: Date;
   coverLetter?: string;
   status: 'New' | 'Interviewing' | 'Review' | 'Offer Sent' | 'Rejected';
-  resume?: string; // Base64 or URL
+  resume?: string; // Filename of the uploaded file stored in /uploads
   createdAt: Date;
 }
 

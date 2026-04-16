@@ -49,3 +49,7 @@ backend/debug_tz.js
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# uploaded resume files (keep folder via .gitkeep)
+uploads/*
+!uploads/.gitkeep

@@ -66,10 +66,10 @@ export function CareersClient({ initialJobs }: CareersClientProps) {
     roleId: '',
     experience: '',
     portfolio: '',
-    coverLetter: '',
-    resume: ''
+    coverLetter: ''
   });
 
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -80,13 +80,8 @@ export function CareersClient({ initialJobs }: CareersClientProps) {
         alert("File size exceeds 5MB limit.");
         return;
       }
+      setResumeFile(file);
       setSelectedFileName(file.name);
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, resume: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -104,21 +99,25 @@ export function CareersClient({ initialJobs }: CareersClientProps) {
 
     try {
       const apiUrl = getApiUrl();
+
+      // Build multipart/form-data — no base64, works on all devices
+      const payload = new FormData();
+      payload.append('name', formData.name);
+      payload.append('email', formData.email);
+      payload.append('roleTitle', job?.title || 'Unknown Position');
+      payload.append('experience', formData.experience);
+      payload.append('phone', formData.phone);
+      payload.append('coverLetter', formData.coverLetter);
+      if (resumeFile) payload.append('resume', resumeFile);
+
       const response = await fetch(`${apiUrl}/api/applications`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          roleTitle: job?.title || 'Unknown Position',
-          experience: formData.experience,
-          phone: formData.phone,
-          coverLetter: formData.coverLetter,
-          resume: formData.resume,
-        }),
+        // Do NOT set Content-Type — browser sets it automatically with boundary
+        body: payload,
       });
 
-      if (!response.ok) throw new Error('Failed to submit application');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to submit application');
 
       setFormSubmitted(true);
       setTimeout(() => {
@@ -131,9 +130,9 @@ export function CareersClient({ initialJobs }: CareersClientProps) {
           roleId: '',
           experience: '',
           portfolio: '',
-          coverLetter: '',
-          resume: ''
+          coverLetter: ''
         });
+        setResumeFile(null);
         setSelectedFileName("");
       }, 3000);
     } catch (error) {
