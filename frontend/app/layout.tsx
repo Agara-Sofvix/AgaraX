@@ -19,7 +19,12 @@ export const metadata: Metadata = {
   title: "AgaraX | Engineering Scalable Digital Products",
   description: "We build enterprise-grade software solutions that drive growth, enhance efficiency, and transform businesses globally.",
   icons: {
-    icon: "/logo-v3.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/logo-v3.png", type: "image/png", sizes: "32x32" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/logo-v3.png",
   },
 };
 

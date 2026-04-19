@@ -139,7 +139,7 @@ function AdminJobsContent() {
         </div>
         
         <div className="w-full md:w-auto flex-1 max-w-md relative">
-          <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
           <input 
             type="text" 
             placeholder="Search jobs..."

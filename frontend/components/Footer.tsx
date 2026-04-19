@@ -74,7 +74,7 @@ export function Footer() {
             </div>
             <div className="flex justify-start gap-4 mt-4">
               <a 
-                href="https://www.linkedin.com/company/AgaraX/" 
+                href="https://www.linkedin.com/in/agara-sofvix-068b703b2/?skipRedirect=true" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-[#4F46E5] hover:bg-white/10 hover:border-[#4F46E5]/30 transition-all duration-300"
@@ -83,7 +83,7 @@ export function Footer() {
                 <Linkedin className="w-5 h-5" />
               </a>
               <a 
-                href="https://www.instagram.com/agarax?igsh=MWs1NWVjejdpcHVtMg%3D%3D" 
+                href="https://www.instagram.com/agara_sofvix/" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-[#4F46E5] hover:bg-white/10 hover:border-[#4F46E5]/30 transition-all duration-300"

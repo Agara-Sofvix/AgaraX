@@ -62,7 +62,8 @@ export const LOCAL_BUSINESS_SCHEMA = {
     "longitude": 80.2184
   },
   "sameAs": [
-    "https://linkedin.com/company/AgaraX",
+    "https://www.linkedin.com/in/agara-sofvix-068b703b2/?skipRedirect=true",
+    "https://www.instagram.com/agara_sofvix/",
     "https://twitter.com/agarax"
   ]
 };
